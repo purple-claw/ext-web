@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify
+import os
 from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
 
 MODEL_NAME = "nitinsri/mira-v1"
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME)
+
+# Set Hugging Face token
+HF_TOKEN = os.getenv("HF_TOKEN")  # Load from environment variable
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN)
+model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN)
 
 ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer)
-
 app = Flask(__name__)
 
 @app.route("/predict", methods=["POST"])
