@@ -5,7 +5,7 @@ from transformers import AutoModelForTokenClassification, AutoTokenizer, pipelin
 MODEL_NAME = "nitinsri/mira-v1"
 
 # Set Hugging Face token
-HF_TOKEN = os.getenv("HF_TOKEN")  # Load from environment variable
+HF_TOKEN = "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"  # Load from environment variable
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN)
 model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN)
