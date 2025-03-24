@@ -1,37 +1,27 @@
 from flask import Flask, request, jsonify
-import os
-from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
+import spacy
+from collections import defaultdict
 
-MODEL_NAME = "nitinsri/mira-v1"
-
-# Set Hugging Face token
-HF_TOKEN = "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"  # Load from environment variable
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN)
-model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN)
-
-ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer)
 app = Flask(__name__)
+nlp = spacy.load("en_core_web_sm")
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        data = request.json
-        text = data.get("text", "")
-
-        if not text:
-            return jsonify({"error": "No text provided"}), 400
-
-        # Run model inference
-        ner_results = ner_pipeline(text)
-        
-        # Process relationships into JSON format
-        relationships = [{"word": ent["word"], "entity": ent["entity"]} for ent in ner_results]
-
-        return jsonify({"relationships": relationships})
+def extract_relations(text):
+    doc = nlp(text)
+    relations = defaultdict(list)
     
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    for token in doc:
+        if token.dep_ in ("nsubj", "dobj", "pobj", "attr"):
+            head = token.head.text
+            relations[head].append(token.text)
+    
+    return relations
+
+@app.route("/process", methods=["POST"])
+def process_text():
+    data = request.json
+    text = data.get("text", "")
+    relations = extract_relations(text)
+    return jsonify({"relations": relations})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
